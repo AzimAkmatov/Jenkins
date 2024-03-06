@@ -2,9 +2,8 @@ pipeline {
     agent any
     
     environment {
-        AWS_ACCESS_KEY_ID     = credentials('aws-access-key-id')
-        AWS_SECRET_ACCESS_KEY = credentials('aws-secret-access-key')
-        AWS_DEFAULT_REGION    = 'us-east-1'
+        DOCKER_REGISTRY = 'docker.io'  // Change this to your Docker registry if needed
+        DOCKER_IMAGE = 'nginx-custom:latest'  // Change this to your desired image name and tag
     }
     
     stages {
@@ -14,22 +13,16 @@ pipeline {
             }
         }
         
-        stage('Terraform Init') {
+        stage('Build Docker Image') {
             steps {
-                sh 'terraform init'
+                script {
+                    docker.build(env.DOCKER_IMAGE, '-f Dockerfile .')
+                }
             }
         }
         
-        stage('Terraform Plan') {
+        stage('Push Docker Image') {
             steps {
-                sh 'terraform plan -out=tfplan'
-            }
-        }
-        
-        stage('Terraform Apply') {
-            steps {
-                sh 'terraform apply -auto-approve tfplan'
-            }
-        }
-    }
-}
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
+                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY"
+      

@@ -8,7 +8,7 @@ node {
     }
 
     stage('Build image') {
-        docker.build('azimakmatov/jenkins', '.').push()
+        sh 'docker build -t azimakmatov/jenkins .'
     }
 
 

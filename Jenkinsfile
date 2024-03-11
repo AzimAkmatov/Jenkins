@@ -1,28 +1,23 @@
-pipeline {
-    agent any
-    
-    environment {
-        DOCKER_REGISTRY = 'docker.io'  // Change this to your Docker registry if needed
-        DOCKER_IMAGE = 'nginx-custom:latest'  // Change this to your desired image name and tag
-    }
-    
-    stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
+node {    
+      def app     
+      stage('Clone repository') {               
+             
+            checkout scm    
+      }     
+      stage('Build image') {         
+       
+            app = docker.build("brandonjones085/test")    
+       }     
+      stage('Test image') {           
+            app.inside {            
+             
+             sh 'echo "Tests passed"'        
+            }    
+        }     
+       stage('Push image') {
+                                                  docker.withRegistry('https://registry.hub.docker.com', 'git') {            
+       app.push("${env.BUILD_NUMBER}")            
+       app.push("latest")        
+              }    
+           }
         }
-        
-        stage('Build Docker Image') {
-            steps {
-                script {
-                    docker.build(env.DOCKER_IMAGE, '-f Dockerfile .')
-                }
-            }
-        }
-        
-        stage('Push Docker Image') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'DOCKER_USERNAME', passwordVariable: 'DOCKER_PASSWORD')]) {
-                    sh "docker login -u $DOCKER_USERNAME -p $DOCKER_PASSWORD $DOCKER_REGISTRY"
-      

@@ -8,9 +8,9 @@ node {
     }
 
     stage('Build image') {
-  
-       app = docker.build("azimakmatov/jenkins")
+        docker.build('azimakmatov/jenkins', '.').push()
     }
+
 
     stage('Test image') {
   
